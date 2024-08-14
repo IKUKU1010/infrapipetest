@@ -6,7 +6,6 @@ on:
       - main
 
 jobs:
-
   create_s3_bucket:
     name: Create S3 Bucket
     runs-on: ubuntu-latest
@@ -18,16 +17,21 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Generate unique S3 bucket name
+        id: generate_bucket_name
+        run: echo "BUCKET_NAME=sock-bucket-$(date +%s)" >> $GITHUB_ENV
+
       - name: Create S3 bucket
         run: |
-          if aws s3api head-bucket --bucket "your-s3-bucket-name" >/dev/null 2>&1; then
-            echo "Bucket already exists, skipping creation."
+          if aws s3api head-bucket --bucket "$BUCKET_NAME" >/dev/null 2>&1; then
+            echo "Bucket $BUCKET_NAME already exists, skipping creation."
           else
-            echo "Bucket does not exist, creating it."
-            aws s3 mb s3://your-s3-bucket-name
+            echo "Bucket $BUCKET_NAME does not exist, creating it."
+            aws s3 mb s3://$BUCKET_NAME
           fi
         shell: bash
         env:
+          BUCKET_NAME: ${{ env.BUCKET_NAME }}
           AWS_DEFAULT_REGION: us-east-1
           AWS_REGION: us-east-1
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -49,6 +53,9 @@ jobs:
 
       - name: Apply Terraform configuration
         run: terraform apply --auto-approve
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   update_kubeconfig:
     name: Update kubeconfig for EKS Cluster
@@ -106,11 +113,13 @@ jobs:
         run: |
           helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx/
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts/
+          helm repo add jetstack https://charts.jetstack.io
           helm repo update
 
   deploy_letsencrypt:
     name: Deploy Let's Encrypt
     runs-on: ubuntu-latest
+    needs: install_helm
     steps:
       - name: Deploy Let's Encrypt
         run: |
