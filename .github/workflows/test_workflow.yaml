@@ -6,6 +6,7 @@ on:
       - main
 
 jobs:
+
   create_s3_bucket:
     name: Create S3 Bucket
     runs-on: ubuntu-latest
@@ -45,10 +46,18 @@ jobs:
 
       - name: Initialize Terraform
         working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
         run: terraform init
 
       - name: Apply Terraform configuration
         working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
         run: terraform apply --auto-approve
 
   update_kubeconfig:
