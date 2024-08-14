@@ -25,6 +25,12 @@ jobs:
           else
             echo "Bucket does not exist, creating it."
             aws s3 mb s3://sock-bucket
+        shell: /usr/bin/bash
+        env:
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   terraform_provision:
     name: Provision EKS Cluster
@@ -33,13 +39,6 @@ jobs:
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v3
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
@@ -50,9 +49,6 @@ jobs:
 
       - name: Apply Terraform configuration
         working-directory: terraform
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: terraform apply --auto-approve
 
   update_kubeconfig:
@@ -98,10 +94,24 @@ jobs:
       - name: Create sock-shop namespace
         run: kubectl create namespace sock-shop
 
+  install_helm:
+    name: Install Helm and Add Repositories
+    runs-on: ubuntu-latest
+    needs: create_namespace
+    steps:
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      - name: Add Helm repositories
+        run: |
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx/
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts/
+          helm repo update
+
   deploy_letsencrypt:
     name: Deploy Let's Encrypt
     runs-on: ubuntu-latest
-    needs: create_namespace
     steps:
       - name: Deploy Let's Encrypt
         run: |
@@ -114,25 +124,10 @@ jobs:
           kubectl apply -f k8s/cluster-issuer.yml
           kubectl apply -f k8s/certificate.yaml
 
-  install_helm:
-    name: Install Helm and Add Repositories
-    runs-on: ubuntu-latest
-    needs: deploy_letsencrypt
-    steps:
-      - name: Install Helm
-        run: |
-          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-      - name: Add Helm repositories
-        run: |
-          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx/
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts/
-          helm repo update
-
   deploy_sock_shop:
     name: Deploy Sock Shop Application
     runs-on: ubuntu-latest
-    needs: install_helm
+    needs: deploy_letsencrypt
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v3
