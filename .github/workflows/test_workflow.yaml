@@ -25,7 +25,6 @@ jobs:
           else
             echo "Bucket does not exist, creating it."
             aws s3 mb s3://sock-bucket
-          fi
 
   terraform_provision:
     name: Provision EKS Cluster
@@ -34,6 +33,13 @@ jobs:
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
@@ -44,6 +50,9 @@ jobs:
 
       - name: Apply Terraform configuration
         working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: terraform apply --auto-approve
 
   update_kubeconfig:
@@ -76,7 +85,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Apply aws-auth ConfigMap
-        run: kubectl apply -f kubernetes/aws-auth.yaml
+        run: kubectl apply -f k8s/aws-auth.yaml
 
       - name: Update kubeconfig for changes
         run: aws eks update-kubeconfig --name socks-shop-CICD001 --region us-east-1
@@ -102,8 +111,8 @@ jobs:
             --version v1.15.2 \
             --set crds.enabled=true
           
-          kubectl apply -f kubernetes/cluster-issuer.yml
-          kubectl apply -f kubernetes/certificate.yaml
+          kubectl apply -f k8s/cluster-issuer.yml
+          kubectl apply -f k8s/certificate.yaml
 
   install_helm:
     name: Install Helm and Add Repositories
