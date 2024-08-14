@@ -58,6 +58,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name socks-shop-CICD001 --region us-east-1
 
