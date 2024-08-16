@@ -82,9 +82,7 @@ jobs:
           helm install cert-manager jetstack/cert-manager \
             --namespace sock-shop \
             --version v1.15.2 \
-            --set installCRDs=true
-          kubectl apply -f cluster-issuer.yml
-          kubectl apply -f certificate.yaml
+            --set crds.enabled=true
 
       - name: Deploy Prometheus and Grafana
         run: |
@@ -98,6 +96,16 @@ jobs:
 
       - name: Delay
         run: sleep 120s
+
+      - name: Change Back to Project Root
+        run: cd ..
+
+      - name: Apply Cluster Issuer
+        run: kubectl apply -f cluster-issuer.yml
+
+      - name: Apply Cluster Issuer
+        run: kubectl apply -f cluster-issuer.yml
+               
 
       - name: Deploy Ingress Resources
         run: kubectl apply -f ingress.yml
