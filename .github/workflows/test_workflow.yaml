@@ -66,7 +66,7 @@ jobs:
         run: kubectl apply -f aws-auth.yaml --validate=false
       
       - name: Create namespace sock-shop
-        run: kubectl create namespace sock-shop
+        run: kubectl get namespace sock-shop || kubectl create namespace sock-shop
 
       - name: Update kubeconfig
         run: |
