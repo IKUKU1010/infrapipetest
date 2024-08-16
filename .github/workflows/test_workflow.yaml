@@ -55,8 +55,15 @@ jobs:
           terraform -chdir=terraform/ init
           terraform -chdir=terraform/ apply --auto-approve
 
+      - name: Change Back to Project Root
+        run: cd ..
+      
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name socks-shop-CICD001 --region ${{ vars.REGION }} --name sock-shop
+
       - name: Apply aws-auth ConfigMap
-        run: kubectl apply -f aws-auth.yaml
+        run: kubectl apply -f aws-auth.yaml --validate=false
       
       - name: Create namespace sock-shop
         run: kubectl create namespace sock-shop
