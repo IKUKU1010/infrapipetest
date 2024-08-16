@@ -29,7 +29,7 @@ spec:
                 name: prometheus-grafana
                 port:
                   number: 80
-    - host: prometheus.nayokians.me
+    - host: prometheusss.nayokians.me
       http:
         paths:
           - path: /
