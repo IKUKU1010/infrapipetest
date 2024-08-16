@@ -103,11 +103,11 @@ jobs:
         run: cd ..
 
       - name: Apply Cluster Issuer
-        run: kubectl apply -f cluster-issuer.yml
+        run: kubectl apply -f others/cluster-issuer.yml
 
       - name: Apply Cluster Issuer
-        run: kubectl apply -f cluster-issuer.yml
+        run: kubectl apply -f others/cluster-issuer.yml
                
 
       - name: Deploy Ingress Resources
-        run: kubectl apply -f ingress.yml
+        run: kubectl apply -f others/ingress.yml
