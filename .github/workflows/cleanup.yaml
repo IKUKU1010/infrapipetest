@@ -35,21 +35,4 @@ jobs:
         run: |
           aws dynamodb delete-table --table-name terraform-lock
 
-      - name: Uninstall Helm Releases
-        run: |
-          helm uninstall capstoneapp --namespace sock-shop
-          helm uninstall cert-manager --namespace sock-shop
-          helm uninstall prometheus --namespace sock-shop
-          helm uninstall ingress-nginx --namespace sock-shop
 
-      - name: Delete Kubernetes Resources
-        run: |
-          kubectl delete -f ingress.yml --ignore-not-found
-          kubectl delete -f cluster-Issuer.yml --ignore-not-found
-          kubectl delete -f certificate.yaml --ignore-not-found
-          kubectl delete namespace sock-shop --ignore-not-found
-          kubectl delete -f aws-auth.yaml --ignore-not-found
-
-      - name: Delete EKS Cluster
-        run: |
-          eksctl delete cluster --name socks-shop-CICD001 --region ${{ vars.REGION }}
